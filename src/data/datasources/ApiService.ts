@@ -1,16 +1,16 @@
-import axios, {AxiosInstance, AxiosResponse} from 'axios';
+import axios, {AxiosInstance, AxiosResponse, AxiosError} from 'axios';
 
 class ApiService {
   private client: AxiosInstance;
+  private token: string | null;
 
   constructor(baseURL: string) {
-    // Create an Axios instance with the base URL and optional auth token
+    this.token = null;
     this.client = axios.create({
       baseURL: baseURL,
       headers: {
         'Content-Type': 'application/json',
-        Authorization:
-          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyMTQwZTJiYy05MzBmLTRiY2EtOGMzNC1hYTA4ZTA3NjUxMzUiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEiLCJzdWIiOiIxIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZSI6ImFkbWluIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjpbInNlYy5leHQuYyIsInNlYy5leHQuZCIsInNlYy5leHQudSIsInNlYy5leHQudiIsInNlYy5tb2QuYyIsInNlYy5tb2QuZCIsInNlYy5tb2QudSIsInNlYy5tb2QudiIsInNlYy5wZXIuYyIsInNlYy5wZXIuZCIsInNlYy5wZXIudSIsInNlYy5wZXIudiIsInNlYy5yb2wuYyIsInNlYy5yb2wuZCIsInNlYy5yb2wudSIsInNlYy5yb2wudiIsInNlYy51c2UuYyIsInNlYy51c2UuZCIsInNlYy51c2UudSIsInNlYy51c2UudiJdLCJwZXJtaXNzaW9uIjpbInNlYy5leHQuYyIsInNlYy5leHQuZCIsInNlYy5leHQudSIsInNlYy5leHQudiIsInNlYy5tb2QuYyIsInNlYy5tb2QuZCIsInNlYy5tb2QudSIsInNlYy5tb2QudiIsInNlYy5wZXIuYyIsInNlYy5wZXIuZCIsInNlYy5wZXIudSIsInNlYy5wZXIudiIsInNlYy5yb2wuYyIsInNlYy5yb2wuZCIsInNlYy5yb2wudSIsInNlYy5yb2wudiIsInNlYy51c2UuYyIsInNlYy51c2UuZCIsInNlYy51c2UudSIsInNlYy51c2UudiJdLCJyb2xlIjpbIi0iLCJTdXBlciBBZG1pbiJdLCJleHAiOjE3MzE0ODkyMTIsImlzcyI6Imh0dHBzOi8vbW9iaWxlLmRldi5xdWFkcmFudC1zaS5pZC9hZ2VudGRldi8iLCJhdWQiOiJRTUFHRU5UIn0.deVCE7eh6gMgub_Ne5NHcXfWA-OhjIQLtbcb8KGGyyk',
+        Authorization: `Bearer ${this.token}`,
       },
     });
 
@@ -26,13 +26,29 @@ class ApiService {
       },
     );
 
+    // Response interceptor (async)
     this.client.interceptors.response.use(
       response => {
         // Handle response data here (e.g., logging, transformation)
         return response;
       },
-      error => {
-        // Handle response error (e.g., token expiration, network issues)
+      async (error: AxiosError) => {
+        if (error.response && error.response.status === 401) {
+          // Token expired or unauthorized request, try refreshing the token
+          try {
+            // Get a new token
+            this.token = await this.loginAndGetToken('admin', 'admin');
+            if (this.token) {
+              // Retry the original request with the new token
+              error.config.headers.Authorization = `Bearer ${this.token}`;
+              return this.client(error.config); // Retry original request
+            }
+          } catch (authError) {
+            // Handle failed authentication (e.g., redirect to login page)
+            return Promise.reject(authError);
+          }
+        }
+        // Handle other response errors
         return Promise.reject(error);
       },
     );
@@ -85,6 +101,28 @@ class ApiService {
       return await this.client.delete(url, {params});
     } catch (error) {
       throw error;
+    }
+  }
+
+  // Private method to handle login and get token
+  private async loginAndGetToken(
+    username: string,
+    password: string,
+  ): Promise<string | null> {
+    try {
+      const response = await this.post<{token: string}>('/login', {
+        username,
+        password,
+      });
+      if (response.data.token) {
+        this.token = response.data.token;
+        return this.token;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error('Login failed', error);
+      return null;
     }
   }
 }
