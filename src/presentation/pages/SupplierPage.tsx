@@ -8,18 +8,16 @@ import {
 } from 'react-native';
 import ApiService from '../../data/datasources/ApiService.ts';
 import SupplierRepositoryImpl from '../../data/datasources/repositories/SupplierRepositoryImpl.ts';
-import {
-  SupplierDataResponse,
-  SupplierResponse,
-} from '../../data/models/SupplierResponse.ts';
+import {SupplierResponse} from '../../data/models/SupplierResponse.ts';
+import {RootListResponse} from '../../data/models/RootListResponse.ts';
 
 const service = new ApiService(
   'https://mobile.dev.quadrant-si.id/developertest',
 );
 const repo = new SupplierRepositoryImpl(service);
 
-const SupplierPage = () => {
-  const [suppliers, setSuppliers] = useState<SupplierDataResponse[]>([]);
+const SupplierPage = ({navigation}) => {
+  const [suppliers, setSuppliers] = useState<SupplierResponse[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [page, setPage] = useState<number>(1);
   const [size] = useState<number>(10);
@@ -29,7 +27,7 @@ const SupplierPage = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response: SupplierResponse = await repo.data(page, size);
+        const response: RootListResponse<SupplierResponse> = await repo.data(page, size);
         if (page === 1) {
           setSuppliers(response.data);
         } else {
@@ -62,10 +60,12 @@ const SupplierPage = () => {
     }
   };
 
-  // Floating Button Action
   const onFloatingButtonPress = () => {
-    console.log('Floating button pressed!');
-    // You can add a navigation or any action here
+    navigation.navigate('SupplierFormPage');
+  };
+
+  const editItem = (item: SupplierResponse) => {
+    navigation.navigate('SupplierFormPage', {supplier: item});
   };
 
   return (
@@ -74,14 +74,16 @@ const SupplierPage = () => {
         data={suppliers}
         keyExtractor={item => item.id.toString()}
         renderItem={({item}) => (
-          <View style={{padding: 10, borderBottomWidth: 1}}>
-            <Text>Name: {item.name}</Text>
-            <Text>Address: {item.address}</Text>
-            <Text>City: {item.city}</Text>
-            <Text>PostCode: {item.postCode}</Text>
-            <Text>Actor: {item.actor}</Text>
-            <Text>Timestamp: {item.timestamp}</Text>
-          </View>
+          <TouchableOpacity onPress={() => editItem(item)}>
+            <View style={{padding: 10, borderBottomWidth: 1}}>
+              <Text>Name: {item.name}</Text>
+              <Text>Address: {item.address}</Text>
+              <Text>City: {item.city}</Text>
+              <Text>PostCode: {item.postCode}</Text>
+              <Text>Actor: {item.actor}</Text>
+              <Text>Timestamp: {item.timestamp}</Text>
+            </View>
+          </TouchableOpacity>
         )}
         onEndReached={loadMoreData}
         onEndReachedThreshold={0.5}

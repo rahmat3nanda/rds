@@ -1,5 +1,6 @@
 import ApiService from '../ApiService.ts';
 import {SupplierResponse} from '../../models/SupplierResponse.ts';
+import {RootListResponse} from '../../models/RootListResponse.ts';
 
 export default class SupplierRemoteDataSource {
   private service: ApiService;
@@ -8,11 +9,14 @@ export default class SupplierRemoteDataSource {
     this.service = service;
   }
 
-  async data(page: number, size: number): Promise<SupplierResponse> {
+  async data(
+    page: number,
+    size: number,
+  ): Promise<RootListResponse<SupplierResponse>> {
     try {
-      const response = await this.service.get<SupplierResponse>(
-        `/Supplier/inquiry/${page}/${size}`,
-      );
+      const response = await this.service.get<
+        RootListResponse<SupplierResponse>
+      >(`/Supplier/inquiry/${page}/${size}`);
 
       return response.data;
     } catch (e) {

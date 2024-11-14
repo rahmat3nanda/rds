@@ -1,5 +1,5 @@
 // Contact model representing each contact in the "contacts" array
-export interface SupplierDataContactResponse {
+export interface SupplierContactResponse {
   name: string;
   contactType: string;
   value: string;
@@ -8,21 +8,46 @@ export interface SupplierDataContactResponse {
 }
 
 // Data model representing an item in the "data" array
-export interface SupplierDataResponse {
-  id: number;
+export interface SupplierResponse {
+  id: number | null;
   name: string;
   address: string;
   city: string;
   postCode: string;
-  contacts: SupplierDataContactResponse[];
-  actor: string;
-  timestamp: string; // Again, use Date if necessary
+  contacts: SupplierContactResponse[];
+  actor: string | null;
+  timestamp: string | null; // Again, use Date if necessary
 }
 
-// Main response model
-export interface SupplierResponse {
-  totalDatas: number;
-  totalPages: number;
-  page: number;
-  data: SupplierDataResponse[];
+class SupplierDataResponseClass implements SupplierResponse {
+  id: number | null;
+  name: string;
+  address: string;
+  city: string;
+  postCode: string;
+  contacts: SupplierContactResponse[];
+  actor: string | null;
+  timestamp: string | null;
+
+  constructor(
+    id: number | null, // Added id field to constructor
+    name: string,
+    address: string,
+    city: string,
+    postCode: string,
+    contacts: SupplierContactResponse[],
+    actor: string | null = null, // Default value is null if not provided
+    timestamp: string | null = null, // Default value is null if not provided
+  ) {
+    this.id = id;
+    this.name = name;
+    this.address = address;
+    this.city = city;
+    this.postCode = postCode;
+    this.contacts = contacts;
+    this.actor = actor;
+    this.timestamp = timestamp;
+  }
 }
+
+export default SupplierDataResponseClass;

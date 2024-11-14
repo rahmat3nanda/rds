@@ -1,14 +1,15 @@
-import {
-  SupplierDataResponse,
-  SupplierResponse,
-} from '../../data/models/SupplierResponse.ts';
+import {SupplierResponse} from '../../data/models/SupplierResponse.ts';
+import {RootListResponse} from '../../data/models/RootListResponse.ts';
 
 abstract class SupplierRepository {
-  abstract data(page: number, size: number): Promise<SupplierResponse>;
+  abstract data(
+    page: number,
+    size: number,
+  ): Promise<RootListResponse<SupplierResponse>>;
 
-  abstract create(data: SupplierDataResponse): Promise<boolean>;
+  abstract create(data: SupplierResponse): Promise<boolean>;
 
-  abstract update(data: SupplierDataResponse): Promise<boolean>;
+  abstract update(data: SupplierResponse): Promise<boolean>;
 }
 
 export default SupplierRepository;
